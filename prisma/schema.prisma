@@ -1,0 +1,144 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  phone        String?
+  profession   String?
+  institution  String?
+  role         UserRole @default(USER)
+  password     String
+  isActive     Boolean  @default(true)
+  emailVerified Boolean @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  registrations Registration[]
+  createdSeminars Seminar[] @relation("SeminarCreator")
+
+  @@map("users")
+}
+
+model Seminar {
+  id                String   @id @default(cuid())
+  title             String
+  description       String
+  shortDescription  String?
+  imageUrl          String?
+  date              DateTime
+  time              String
+  duration          Int? // in minutes
+  location          String
+  locationType      LocationType @default(OFFLINE)
+  speaker           String
+  speakerBio        String?
+  maxParticipants   Int
+  currentParticipants Int @default(0)
+  category          String
+  price             Int
+  earlyBirdPrice    Int?
+  earlyBirdDeadline DateTime?
+  status            SeminarStatus @default(DRAFT)
+  tags              String? // JSON string array
+  requirements      String? // JSON string array
+  materials         String? // JSON string array
+  agenda            String? // JSON string array
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  creatorId     String
+  creator       User @relation("SeminarCreator", fields: [creatorId], references: [id])
+  registrations Registration[]
+
+  @@map("seminars")
+}
+
+model Registration {
+  id           String           @id @default(cuid())
+  userId       String
+  seminarId    String
+  status       RegistrationStatus @default(PENDING)
+  paymentStatus PaymentStatus   @default(PENDING)
+  paymentMethod String?
+  paymentUrl   String?
+  paidAt       DateTime?
+  registeredAt DateTime         @default(now())
+  cancelledAt  DateTime?
+  notes        String?
+  certificateUrl String?
+  attended     Boolean          @default(false)
+  rating       Int? // 1-5
+  review       String?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  // Relations
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  seminar Seminar @relation(fields: [seminarId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, seminarId])
+  @@map("registrations")
+}
+
+model Certificate {
+  id             String   @id @default(cuid())
+  registrationId String   @unique
+  certificateUrl String
+  issuedAt       DateTime @default(now())
+  templateType   String   @default("default")
+  createdAt      DateTime @default(now())
+
+  @@map("certificates")
+}
+
+// Enums
+enum UserRole {
+  USER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum LocationType {
+  ONLINE
+  OFFLINE
+  HYBRID
+}
+
+enum SeminarStatus {
+  DRAFT
+  PUBLISHED
+  ONGOING
+  COMPLETED
+  CANCELLED
+}
+
+enum RegistrationStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  NO_SHOW
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
