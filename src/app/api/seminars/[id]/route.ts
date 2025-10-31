@@ -3,11 +3,12 @@ import { db } from '@/lib/db'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const seminar = await db.seminar.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         creator: {
           select: {
@@ -77,14 +78,15 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const body = await request.json()
     
     // Check if seminar exists
     const existingSeminar = await db.seminar.findUnique({
-      where: { id: params.id }
+      where: { id }
     })
 
     if (!existingSeminar) {
@@ -96,7 +98,7 @@ export async function PUT(
 
     // Update seminar
     const seminar = await db.seminar.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         title: body.title,
         description: body.description,
@@ -182,12 +184,13 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     // Check if seminar exists
     const existingSeminar = await db.seminar.findUnique({
-      where: { id: params.id }
+      where: { id }
     })
 
     if (!existingSeminar) {
@@ -199,7 +202,7 @@ export async function DELETE(
 
     // Delete seminar (this will also delete related registrations due to cascade)
     await db.seminar.delete({
-      where: { id: params.id }
+      where: { id }
     })
 
     return NextResponse.json({

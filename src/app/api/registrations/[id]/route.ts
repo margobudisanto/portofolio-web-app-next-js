@@ -3,11 +3,12 @@ import { db } from '@/lib/db'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const registration = await db.registration.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         user: {
           select: {
@@ -86,14 +87,15 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const body = await request.json()
     
     // Check if registration exists
     const existingRegistration = await db.registration.findUnique({
-      where: { id: params.id }
+      where: { id }
     })
 
     if (!existingRegistration) {
@@ -105,7 +107,7 @@ export async function PUT(
 
     // Update registration
     const registration = await db.registration.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         status: body.status,
         paymentStatus: body.paymentStatus,
@@ -190,12 +192,13 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     // Check if registration exists
     const existingRegistration = await db.registration.findUnique({
-      where: { id: params.id }
+      where: { id }
     })
 
     if (!existingRegistration) {
@@ -207,7 +210,7 @@ export async function DELETE(
 
     // Delete registration
     await db.registration.delete({
-      where: { id: params.id }
+      where: { id }
     })
 
     return NextResponse.json({
